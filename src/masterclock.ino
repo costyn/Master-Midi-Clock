@@ -95,13 +95,11 @@ void setup() {
 
   scheduler.addTask(taskCheckButtonPress);
   scheduler.addTask(taskCheckPots);
-  // scheduler.addTask(taskSendTick);
-  scheduler.addTask(taskSetTickInterval);
+  // scheduler.addTask(taskSetTickInterval);
   taskCheckButtonPress.enable() ;
   taskCheckPots.enable();
-  // taskSendTick.enable();
 
-  FlexiTimer2::set((long)microsecondsPerTick/10,1.0/100000, sendTick);
+  FlexiTimer2::set((long)microsecondsPerTick/100,1.0/10000, sendTick);
   FlexiTimer2::start(); // enable timer interrupt
 
   newBpmSet();
@@ -221,16 +219,17 @@ void sendStartStop(){
 }
 
 void newBpmSet() {
-    writeToLcd();
     microsecondsPerTick = (unsigned long) (1e6 / (tapTempo.getBPM() * 24.0 / 60.0)) ;
-    taskSetTickInterval.enableDelayed(100000);
+    writeToLcd();
+    // taskSetTickInterval.enableDelayed(100000);
+    setTickInterval();
 }
 
 void setTickInterval() {
   FlexiTimer2::stop();
-  FlexiTimer2::set((long)microsecondsPerTick/10,1.0/100000, sendTick);
+  FlexiTimer2::set((long)microsecondsPerTick/100,1.0/10000, sendTick);
   FlexiTimer2::start();
-  taskSetTickInterval.disable();
+  // taskSetTickInterval.disable();
   lcd.setCursor(15,1);
   lcd.print("s");
 }
@@ -238,7 +237,7 @@ void setTickInterval() {
 void writeToLcd() {
   lcd.clear();
   lcd.setCursor(1,0);
-  lcd.print(String(microsecondsPerTick) + " us");
+  lcd.print(String((float)microsecondsPerTick/1000) + " ms");
   lcd.setCursor(1,1);
   lcd.print(String(tapTempo.getBPM()) + " BPM");
   if( running ) {
