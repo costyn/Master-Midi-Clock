@@ -167,38 +167,27 @@ void checkPots(){
 
   static uint32_t Pot1Old;
   static uint32_t Pot1EMA_S = 0;          //initialization of EMA S
-
-  static uint32_t Pot2Old;
-  static uint32_t Pot2EMA_S = 0;          //initialization of EMA S
-
-  float newBpm ;
   float Pot1EMA_A = 0.5;      //initialization of EMA alpha
-  float Pot2EMA_A = 0.5;      //initialization of EMA alpha
-  
   uint32_t Pot1Current = analogRead(PIN_TEMPO_POT1);
   Pot1EMA_S = (Pot1EMA_A*Pot1Current) + ((1-Pot1EMA_A)*Pot1EMA_S);
 
+  static uint32_t Pot2Old;
+  static uint32_t Pot2EMA_S = 0;          //initialization of EMA S
+  float Pot2EMA_A = 0.5;      //initialization of EMA alpha
   uint32_t Pot2Current = analogRead(PIN_TEMPO_POT2);
   Pot2EMA_S = (Pot2EMA_A*Pot2Current) + ((1-Pot2EMA_A)*Pot2EMA_S);
 
-  if( Pot1EMA_S != Pot1Old || Pot2EMA_S != Pot2Old ) {
+  if( Pot1EMA_S != Pot1Old ) {
     Pot1Old = Pot1EMA_S ;
-    Pot2Old = Pot2EMA_S ;
-
-    uint16_t wholeNumber = map(Pot1EMA_S, 0, 1022, MIN_BPM, MAX_BPM);
-    uint16_t decimal = mapFloat((float)Pot2EMA_S, (float)0, (float)1022, 0, 99);
-
-    // lcd.clear();
-    // lcd.setCursor(0,0);
-    // lcd.print(wholeNumber);
-    // lcd.setCursor(0,1);
-    // lcd.print(decimal);
-
-    newBpm = (float)wholeNumber+((float)decimal/100);
+    float newBpm = mapFloat((float)Pot1EMA_S, (float)0, (float)1022, (float)MIN_BPM, (float)MAX_BPM);
     tapTempo.setBPM(newBpm);
-#ifdef SOFTSERIAL
-    Serial.println("Potval: " + String(Pot1EMA_S) + " BPM: " + String(newBpm) + " tapTempo BPM: " + String(tapTempo.getBPM()));
-#endif
+    newBpmSet();
+  }
+
+  if( Pot2EMA_S != Pot2Old ) {
+    Pot2Old = Pot2EMA_S ;
+    long newBeatLength = map(Pot2EMA_S, 0, 1022, 600, 375); // between 100 - 160 bpm
+    tapTempo.setBeatLengthMS(newBeatLength);
     newBpmSet();
   }
 }
@@ -245,7 +234,7 @@ void setTickInterval() {
 void writeToLcd() {
   lcd.clear();
   lcd.setCursor(0,0);
-  lcd.print(String((float)microsecondsPerTick/1000) + " " + String(tapTempo.getBeatLength()));
+  lcd.print(String((float)microsecondsPerTick/1000) + "ms " + String(tapTempo.getBeatLength()) + "ms");
   lcd.setCursor(0,1);
   lcd.print(String(tapTempo.getBPM()) + " BPM");
   if( running ) {
